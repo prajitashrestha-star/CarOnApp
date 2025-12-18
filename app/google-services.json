@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "894175284300",
+    "firebase_url": "https://caron-ae008-default-rtdb.firebaseio.com",
+    "project_id": "caron-ae008",
+    "storage_bucket": "caron-ae008.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:894175284300:android:e72b81b46430dc4efa38e9",
+        "android_client_info": {
+          "package_name": "com.example.caronapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALPLdfuZKPGS2vDPS6FA2eSCFwJWWt0EE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
