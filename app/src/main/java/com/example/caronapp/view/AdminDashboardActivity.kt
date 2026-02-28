@@ -171,7 +171,11 @@ fun AdminDashboardBody() {
                     onDeleteCar = { deleteCar = it }
                 )
                 1 -> ViewUsersScreen()
-                2 -> AdminStatsScreen(carList = carList ?: emptyList())
+                2 -> {
+                    val userVm = remember { com.example.caronapp.viewmodel.UserViewModel(com.example.caronapp.repository.UserRepoImpl()) }
+                    val bookingVm = remember { com.example.caronapp.viewmodel.BookingViewModel(com.example.caronapp.repository.BookingRepoImpl()) }
+                    AdminStatsScreen(carList = carList ?: emptyList(), userViewModel = userVm, bookingViewModel = bookingVm)
+                }
             }
         }
     }
@@ -708,10 +712,24 @@ fun ViewUsersScreen() {
 /* =================== STATS SCREEN =================== */
 
 @Composable
-fun AdminStatsScreen(carList: List<CarModel>) {
+fun AdminStatsScreen(
+    carList: List<CarModel>,
+    userViewModel: com.example.caronapp.viewmodel.UserViewModel,
+    bookingViewModel: com.example.caronapp.viewmodel.BookingViewModel
+) {
+    LaunchedEffect(Unit) {
+        userViewModel.getAllUser()
+        bookingViewModel.getAllBookings()
+    }
+
+    val userList by userViewModel.allUsers.observeAsState(emptyList())
+    val allBookings by bookingViewModel.allBookings.observeAsState(emptyList())
+
     val totalCars = carList.size
-    val availableCars = carList.count { it.isAvailable }
-    val rentedCars = totalCars - availableCars
+    val availableCars = carList.sumOf { it.stock }
+    val rentedCars = allBookings?.count { it.status == "Confirmed" } ?: 0
+    val totalRevenue = allBookings?.sumOf { it.totalPrice.toDoubleOrNull() ?: 0.0 } ?: 0.0
+    val totalUsers = userList?.size ?: 0
 
     Column(
         modifier = Modifier
@@ -735,17 +753,17 @@ fun AdminStatsScreen(carList: List<CarModel>) {
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                label = "Total Cars",
-                value = "$totalCars",
+                label = "Total Cars Stock",
+                value = "$availableCars",
                 icon = Icons.Default.DirectionsCar,
                 bgColor = Blue.copy(alpha = 0.1f),
                 textColor = Blue
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                label = "Available",
-                value = "$availableCars",
-                icon = Icons.Default.CheckCircle,
+                label = "Total Users",
+                value = "$totalUsers",
+                icon = Icons.Default.Group,
                 bgColor = Color(0xFFE8F5E9),
                 textColor = Color(0xFF2E7D32)
             )
@@ -757,7 +775,7 @@ fun AdminStatsScreen(carList: List<CarModel>) {
         ) {
             StatCard(
                 modifier = Modifier.weight(1f),
-                label = "Rented Out",
+                label = "Active Bookings",
                 value = "$rentedCars",
                 icon = Icons.Default.CarRental,
                 bgColor = Color(0xFFFFF3E0),
@@ -765,11 +783,11 @@ fun AdminStatsScreen(carList: List<CarModel>) {
             )
             StatCard(
                 modifier = Modifier.weight(1f),
-                label = "Fleet Usage",
-                value = if (totalCars > 0) "${(rentedCars * 100 / totalCars)}%" else "0%",
-                icon = Icons.Default.BarChart,
-                bgColor = Color(0xFFF3E5F5),
-                textColor = Color(0xFF7B1FA2)
+                label = "Total Revenue",
+                value = "Rs. ${String.format("%.0f", totalRevenue)}",
+                icon = Icons.Default.AttachMoney,
+                bgColor = Color(0xFFE8EAF6),
+                textColor = Color(0xFF3F51B5)
             )
         }
 
@@ -793,13 +811,11 @@ fun AdminStatsScreen(carList: List<CarModel>) {
                 HorizontalDivider(color = Color(0xFFEEEEEE))
                 Spacer(modifier = Modifier.height(12.dp))
 
-                SummaryRow("Total Fleet Size", "$totalCars cars")
-                SummaryRow("Currently Available", "$availableCars cars")
-                SummaryRow("Currently Rented", "$rentedCars cars")
-                SummaryRow(
-                    "Fleet Utilization",
-                    if (totalCars > 0) "${(rentedCars * 100 / totalCars)}%" else "N/A"
-                )
+                SummaryRow("Total Vehicle Models", "$totalCars models")
+                SummaryRow("Total Available Stock (units)", "$availableCars units")
+                SummaryRow("Total Registered Users", "$totalUsers users")
+                SummaryRow("Active / Upcoming Bookings", "$rentedCars bookings")
+                SummaryRow("Total Cash Flow", "Rs. ${String.format("%.0f", totalRevenue)}")
             }
         }
     }
