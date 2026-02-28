@@ -12,7 +12,8 @@ data class CarModel(
     var description: String = "",
     var fuelType: String = "",
     var seats: String = "",
-    var transmission: String = ""
+    var transmission: String = "",
+    var stock: Int = 1 // Defines how many units of this car are in the fleet
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(
@@ -27,7 +28,8 @@ data class CarModel(
             "description" to description,
             "fuelType" to fuelType,
             "seats" to seats,
-            "transmission" to transmission
+            "transmission" to transmission,
+            "stock" to stock
         )
     }
 }

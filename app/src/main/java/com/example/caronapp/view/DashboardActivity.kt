@@ -80,6 +80,23 @@ fun UserDashboardBody() {
     val carList by carViewModel.allCars.observeAsState(emptyList())
     val userBookings by bookingViewModel.userBookings.observeAsState(emptyList())
 
+    // Auto-restock check
+    LaunchedEffect(userBookings, carList) {
+        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        userBookings?.forEach { booking ->
+            if (booking.status == "Confirmed" && booking.endDate < todayStr) {
+                // Booking has expired -> Complete it and restock
+                bookingViewModel.updateBookingStatus(booking.bookingId, "Completed") { _, _ -> }
+                
+                val car = carList?.find { it.carId == booking.carId }
+                if (car != null) {
+                    val restoredCar = car.copy(stock = car.stock + 1, isAvailable = true)
+                    carViewModel.updateCar(car.carId, restoredCar) { _, _ -> }
+                }
+            }
+        }
+    }
+
     // State for showing Booking dialog
     var carToBook by remember { mutableStateOf<CarModel?>(null) }
 
@@ -147,7 +164,7 @@ fun UserDashboardBody() {
         Box(modifier = Modifier.padding(paddingValues)) {
             when (selectedTab) {
                 0 -> BrowseCarsScreen(
-                    carList = (carList ?: emptyList()).filter { it.isAvailable },
+                    carList = (carList ?: emptyList()).filter { it.stock > 0 },
                     onBookCar = { carToBook = it }
                 )
                 1 -> MyBookingsScreen(
@@ -156,6 +173,12 @@ fun UserDashboardBody() {
                         bookingViewModel.cancelBooking(booking.bookingId) { success, message ->
                             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                             if (success) {
+                                // Restore stock on cancellation
+                                val carToRestore = carList?.find { it.carId == booking.carId }
+                                if (carToRestore != null) {
+                                    val restoredCar = carToRestore.copy(stock = carToRestore.stock + 1, isAvailable = true)
+                                    carViewModel.updateCar(carToRestore.carId, restoredCar) { _, _ -> }
+                                }
                                 bookingViewModel.getBookingsByUser(userId)
                             }
                         }
@@ -188,8 +211,12 @@ fun UserDashboardBody() {
                 )
                 bookingViewModel.createBooking(booking) { success, message ->
                     if (success) {
-                        // Mark car as not available
-                        val updatedCar = car.copy(isAvailable = false)
+                        // Mark car as not available and reduce stock
+                        val newStock = car.stock - 1
+                        val updatedCar = car.copy(
+                            stock = newStock,
+                            isAvailable = newStock > 0
+                        )
                         carViewModel.updateCar(car.carId, updatedCar) { _, _ ->
                             carViewModel.getAllCars()
                         }
@@ -294,7 +321,7 @@ fun CarUserCard(car: CarModel, onBook: () -> Unit) {
                     color = Color(0xFFE8F5E9)
                 ) {
                     Text(
-                        text = "Available",
+                        text = "${car.stock} Available",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,

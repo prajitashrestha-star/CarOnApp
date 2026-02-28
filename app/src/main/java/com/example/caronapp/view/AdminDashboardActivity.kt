@@ -360,6 +360,7 @@ fun CarAdminCard(
                     DetailRow(label = "Brand", value = car.brand)
                     DetailRow(label = "Model", value = car.model)
                     DetailRow(label = "Year", value = car.year)
+                    DetailRow(label = "Stock", value = "${car.stock} units")
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     DetailRow(label = "Fuel", value = car.fuelType)
@@ -454,6 +455,7 @@ fun AddEditCarDialog(
     var model by remember { mutableStateOf(car?.model ?: "") }
     var year by remember { mutableStateOf(car?.year ?: "") }
     var pricePerDay by remember { mutableStateOf(car?.pricePerDay ?: "") }
+    var stock by remember { mutableStateOf(car?.stock?.toString() ?: "1") }
     var imageUrl by remember { mutableStateOf(car?.imageUrl ?: "") }
     var description by remember { mutableStateOf(car?.description ?: "") }
     var fuelType by remember { mutableStateOf(car?.fuelType ?: "") }
@@ -501,6 +503,12 @@ fun AddEditCarDialog(
                     label = "Seats",
                     keyboardType = KeyboardType.Number
                 )
+                AdminTextField(
+                    value = stock,
+                    onValueChange = { stock = it },
+                    label = "Total Stock",
+                    keyboardType = KeyboardType.Number
+                )
                 AdminTextField(value = transmission, onValueChange = { transmission = it }, label = "Transmission (Manual/Automatic)")
                 AdminTextField(value = imageUrl, onValueChange = { imageUrl = it }, label = "Image URL (optional)")
                 AdminTextField(value = description, onValueChange = { description = it }, label = "Description (optional)")
@@ -540,7 +548,8 @@ fun AddEditCarDialog(
                         description = description,
                         fuelType = fuelType,
                         seats = seats,
-                        transmission = transmission
+                        transmission = transmission,
+                        stock = stock.toIntOrNull() ?: 1
                     )
                     onSave(newCar)
                 },
