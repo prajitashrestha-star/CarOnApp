@@ -54,6 +54,12 @@ fun LoginBody() {
     val activity = context as Activity
     val userViewModel = remember { UserViewModel(com.example.caronapp.repository.UserRepoImpl()) }
 
+    // --- SEEDED ADMIN CREDENTIALS (Hardcoded) ---
+    // These are checked locally BEFORE Firebase Auth
+    // No need to create this account in Firebase Console
+    val adminEmail = "admin@caronapp.com"
+    val adminPassword = "Admin@123"
+
     val fieldModifier = Modifier.fillMaxWidth()
 
     // --- MATCHING REGISTRATION COLORS ---
@@ -127,11 +133,18 @@ fun LoginBody() {
             onClick = {
                 if (email.isEmpty() || password.isEmpty()) {
                     Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                } else if (email.trim().equals(adminEmail, ignoreCase = true) && password.trim() == adminPassword) {
+                    // ADMIN LOGIN — validated locally, bypass Firebase Auth
+                    Toast.makeText(context, "Welcome, Admin!", Toast.LENGTH_SHORT).show()
+                    context.startActivity(Intent(context, AdminDashboardActivity::class.java))
+                    activity.finish()
                 } else {
+                    // REGULAR USER LOGIN — via Firebase Auth
                     userViewModel.login(email, password) { success, message ->
                         if (success) {
                             val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                             if (firebaseUser?.isEmailVerified == true) {
+                                // Verified user → go to User Dashboard
                                 context.startActivity(Intent(context, DashboardActivity::class.java))
                                 activity.finish()
                             } else {
