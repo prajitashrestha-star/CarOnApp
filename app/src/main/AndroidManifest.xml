@@ -12,6 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CaronApp">
         <activity
+            android:name=".view.AdminDashboardActivity"
+            android:exported="false"
+            android:label="Admin Dashboard"
+            android:theme="@style/Theme.CaronApp" />
+        <activity
             android:name=".view.DashboardActivity"
             android:exported="true"
             android:label="@string/title_activity_dashboard"
