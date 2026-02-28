@@ -420,6 +420,7 @@ fun CarSpecRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: Stri
 
 /* =================== BOOK CAR DIALOG =================== */
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookCarDialog(
     car: CarModel,
@@ -429,11 +430,45 @@ fun BookCarDialog(
     var startDate by remember { mutableStateOf("") }
     var endDate by remember { mutableStateOf("") }
     var totalDays by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val pricePerDay = car.pricePerDay.toDoubleOrNull() ?: 0.0
     val days = totalDays.toIntOrNull() ?: 0
     val totalPrice = (pricePerDay * days)
+
+    if (showDatePicker) {
+        val dateRangePickerState = rememberDateRangePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val startMillis = dateRangePickerState.selectedStartDateMillis
+                        val endMillis = dateRangePickerState.selectedEndDateMillis
+                        if (startMillis != null && endMillis != null) {
+                            val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                            formatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                            startDate = formatter.format(Date(startMillis))
+                            endDate = formatter.format(Date(endMillis))
+                            val diff = endMillis - startMillis
+                            val daysBetween = (java.util.concurrent.TimeUnit.MILLISECONDS.toDays(diff) + 1).toInt()
+                            totalDays = daysBetween.toString()
+                        }
+                        showDatePicker = false
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DateRangePicker(
+                state = dateRangePickerState,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -477,54 +512,26 @@ fun BookCarDialog(
                     }
                 }
 
-                // Date fields
-                OutlinedTextField(
-                    value = startDate,
-                    onValueChange = { startDate = it },
-                    label = { Text("Start Date (e.g. 2026-03-01)") },
-                    modifier = Modifier.fillMaxWidth(),
+                // Date Picker Trigger
+                OutlinedButton(
+                    onClick = { showDatePicker = true },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(10.dp),
-                    singleLine = true,
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFF5F5F5),
-                        focusedContainerColor = Color(0xFFF5F5F5),
-                        focusedIndicatorColor = Blue,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                )
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Blue)
+                ) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Select Dates")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (startDate.isEmpty()) "Select Booking Dates" else "$startDate to $endDate")
+                }
 
-                OutlinedTextField(
-                    value = endDate,
-                    onValueChange = { endDate = it },
-                    label = { Text("End Date (e.g. 2026-03-05)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true,
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFF5F5F5),
-                        focusedContainerColor = Color(0xFFF5F5F5),
-                        focusedIndicatorColor = Blue,
-                        unfocusedIndicatorColor = Color.Transparent
+                if (days > 0) {
+                    Text(
+                        text = "Duration: $totalDays Days",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.DarkGray
                     )
-                )
-
-                OutlinedTextField(
-                    value = totalDays,
-                    onValueChange = { totalDays = it },
-                    label = { Text("Number of Days") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
-                    singleLine = true,
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFF5F5F5),
-                        focusedContainerColor = Color(0xFFF5F5F5),
-                        focusedIndicatorColor = Blue,
-                        unfocusedIndicatorColor = Color.Transparent
-                    )
-                )
+                }
 
                 // Total price display
                 if (days > 0) {
