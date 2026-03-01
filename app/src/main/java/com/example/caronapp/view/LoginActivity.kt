@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -94,7 +95,7 @@ fun LoginBody() {
             value = email,
             onValueChange = { email = it },
             placeholder = { Text("Email", fontWeight = FontWeight.Light) },
-            modifier = fieldModifier,
+            modifier = fieldModifier.testTag("emailInput"),
             shape = RoundedCornerShape(12.dp),
             colors = inputColors,
             singleLine = true
@@ -107,7 +108,7 @@ fun LoginBody() {
             value = password,
             onValueChange = { password = it },
             placeholder = { Text("Password", fontWeight = FontWeight.Light) },
-            modifier = fieldModifier,
+            modifier = fieldModifier.testTag("passwordInput"),
             visualTransformation = if (visibility) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { visibility = !visibility }) {
@@ -158,7 +159,8 @@ fun LoginBody() {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp),
+                .height(55.dp)
+                .testTag("loginButton"),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Blue)
         ) {
